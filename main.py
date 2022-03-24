@@ -54,7 +54,7 @@ class SimpleRect: # just rectangles
         global new_level_flag
         self.color = color
         self.i = 0
-        tmp = -3.14
+        tmp = -3.14 
         while tmp <= 3.14:
             self.i = (math.cos(tmp) + 1) * 5
             self.surface = pygame.Surface((self.size[0] + self.i * 2, self.size[1] + self.i * 2))
