@@ -77,25 +77,33 @@ class SimpleRect: # just rectangles
 
 
 class Button:
-    def __init__(self, pos, size, color, target, type='game'):
+    def __init__(self, pos, size, color, target, type='game', text='', text_color='pink', alpha=255):
         self.type = type
         self.i = 0
         self.x, self.y = pos
         self.size = size
         self.color = color
+        self.text_color = text_color
+        self.alpha = alpha
         self.target = target
+        self.text = pygame.font.SysFont("Calibri", 20).render(text, True, self.text_color)
         self.surface = pygame.Surface(self.size)
         self.surface.fill(self.color)
         self.rect = pygame.Rect(self.x, self.y, self.size[0], self.size[1])
 
     def show(self):
-        screen.blit(self.surface, (self.x + self.i, self.y + self.i))
+        if self.alpha != 0:
+            screen.blit(self.surface, (self.x + self.i, self.y + self.i))
+        screen.blit(self.text, (self.x, self.y))
+
+    def action_to_manu(self):
+        global menu_flag
+        menu_flag = True
 
     def action_menu(self): # action function for buttons of 'menu' type
         global menu_flag
         menu_flag = False
         starttimer()
-        print('aslhdfavejfsljdhbvsldhvf')
 
     def action(self):  # when button is pressed(for buttons of 'game' type)
         t = threading.Thread(target=lambda: answ(self.color))
@@ -121,8 +129,10 @@ class Button:
             if pygame.mouse.get_pressed(num_buttons=3)[0]:
                 if self.rect.collidepoint(x, y):
                     if not new_level_flag:
-                        if self.type =='menu': # starting different functions for different types of buttons
+                        if self.type == 'menu': # starting different functions for different types of buttons
                             self.action_menu()
+                        elif self.type == 'to menu':
+                            self.action_to_manu()
                         else:
                             self.action()
 
@@ -163,7 +173,9 @@ def answ(color): # when user is answering by pressing a button
 
 
 def starttimer():
-    global stop_flag, ans_flag
+    global stop_flag, ans_flag, menu_flag
+    if menu_flag:
+        exit()
     prev_cl = ShowColor.color
     t = threading.Thread(target=lambda: ShowColor.change_color(random.choice([_ for _ in ['red', 'blue', 'purple', 'yellow', 'green', (0, 255, 255)] if _ != prev_cl])))
     t.start()
@@ -178,7 +190,7 @@ def wait1sec():
     if stop_flag:
         sys.exit(0)
     time.sleep(level_k)
-    if mainloop_stop_flag:
+    if mainloop_stop_flag or menu_flag:
         exit(0)
     elif new_level_flag:
         new_level()
@@ -218,12 +230,14 @@ def all_button_click(event):
     LightBlueButton.click(event)
     YellowButton.click(event)
     BlueButton.click(event)
+    GameButtonToMenu.click(event)
 
 
 def game_show():
     screen.blit(background, (0, 0))
     screen.blit(score_text_surface, (150 - score_text_surface.get_size()[0] // 2 - 1, 30))
     screen.blit(personal_best_text_surface, (0, 0))
+    GameButtonToMenu.show()
     RedButton.show()
     GreenButton.show()
     PurpleButton.show()
@@ -246,6 +260,16 @@ MenuStartButton = Button(
     (0, 255, 255),
     (0, 255, 255),
     type='menu'
+)
+GameButtonToMenu = Button(
+    (250, 0),
+    (50, 30),
+    (0, 0, 0),
+    (0, 0, 0),
+    type='to menu',
+    text='menu',
+    text_color='blue',
+    alpha=0
 )
 RedButton = Button(
     (0, 300),
