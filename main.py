@@ -4,11 +4,10 @@ import math
 import pygame
 import threading
 import random
-
-# vars
-n = 0
+# variables
 score = 0
 level_k = 1
+menu_flag = True
 new_level_flag = False
 personal_best = 0
 stop_flag = False
@@ -22,12 +21,12 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Calibri", 30)
 # background
 background = pygame.image.load('touchcolorbg.png')
-background = pygame.transform.scale(background, (300, 500)) 
+background = pygame.transform.scale(background, (300, 500))
 # text
+menu_start_button_text_surface = pygame.font.SysFont("Calibri", 20).render('Start Game!', True, (0, 0, 0))
 personal_best_text_surface = pygame.font.SysFont("Calibri", 20).render('PB: ' + str(personal_best), True, (157, 0, 255))
 score_text_surface = font.render(str(score), True, (0, 0, 0))
 level_text_surface = pygame.font.SysFont("Calibri", 40).render('Level ' + str(score // 10 + 1), True, (0, 0, 0))
-
 
 def score_update(): # renders scores for pb and current
     global score_text_surface, personal_best_text_surface, score, personal_best
@@ -54,7 +53,7 @@ class SimpleRect: # just rectangles
         global new_level_flag
         self.color = color
         self.i = 0
-        tmp = -3.14 
+        tmp = -3.14
         while tmp <= 3.14:
             self.i = (math.cos(tmp) + 1) * 5
             self.surface = pygame.Surface((self.size[0] + self.i * 2, self.size[1] + self.i * 2))
@@ -68,10 +67,9 @@ class SimpleRect: # just rectangles
                 exit()
             tmp += 0.01 / level_k
         self.i = 0
-        if new_level_flag:
-            exit()
-        game_show()
-        pygame.display.update()
+        if not new_level_flag:
+            game_show()
+            pygame.display.update()
 
     def show(self):
         screen.blit(self.surface, (self.x - self.i, self.y - self.i))
@@ -79,7 +77,8 @@ class SimpleRect: # just rectangles
 
 
 class Button:
-    def __init__(self, pos, size, color, target):
+    def __init__(self, pos, size, color, target, type='game'):
+        self.type = type
         self.i = 0
         self.x, self.y = pos
         self.size = size
@@ -92,7 +91,13 @@ class Button:
     def show(self):
         screen.blit(self.surface, (self.x + self.i, self.y + self.i))
 
-    def action(self):  # when button is pressed
+    def action_menu(self): # action function for buttons of 'menu' type
+        global menu_flag
+        menu_flag = False
+        starttimer()
+        print('aslhdfavejfsljdhbvsldhvf')
+
+    def action(self):  # when button is pressed(for buttons of 'game' type)
         t = threading.Thread(target=lambda: answ(self.color))
         t.start()
         self.i = 0
@@ -115,10 +120,15 @@ class Button:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if pygame.mouse.get_pressed(num_buttons=3)[0]:
                 if self.rect.collidepoint(x, y):
-                    self.action()
+                    if not new_level_flag:
+                        if self.type =='menu': # starting different functions for different types of buttons
+                            self.action_menu()
+                        else:
+                            self.action()
 
 
-def new_level():
+
+def new_level(): # function of changing a level
     global score, level_text_surface, personal_best_text_surface, new_level_flag, level_k
     level_k = level_k / 1.1
     pygame.display.update()
@@ -136,7 +146,7 @@ def new_level():
 
     new_level_flag = False
 
-def answ(color):
+def answ(color): # when user is answering by pressing a button
     global score, stop_flag, ans_flag, new_level_flag, score_text_surface, level_k
     present_color = ShowColor.color
     if color == present_color and not ans_flag:
@@ -149,7 +159,7 @@ def answ(color):
     if score != 0 and score % 10 == 0:
         new_level_flag = True
     ans_flag = True
-    stop_flag = True
+    stop_flag = True #
 
 
 def starttimer():
@@ -177,8 +187,9 @@ def wait1sec():
 
 
 def mainloop():
-    starttimer()
-    global mainloop_stop_flag
+    global mainloop_stop_flag, menu_flag
+    if not menu_flag:
+        starttimer()
     while True:
         clock.tick(144)
         screen.blit(background, (0, 0))
@@ -187,8 +198,15 @@ def mainloop():
                 mainloop_stop_flag = True
                 pygame.quit()
                 exit(0)
-            all_button_click(event)
-        if not new_level_flag:
+            if not menu_flag:
+                all_button_click(event)
+            else:
+                MenuStartButton.click(event)
+        if menu_flag:
+            MenuStartButton.show()
+            screen.blit(menu_start_button_text_surface, (100, 215))
+            pygame.display.update()
+        if not new_level_flag and not menu_flag:
             game_show()
             pygame.display.update()
 
@@ -217,15 +235,18 @@ def game_show():
 
 def new_level_show():
     screen.blit(background, (0, 0))
-    screen.blit(level_text_surface, (150 - level_text_surface.get_size()[0] // 2 - 1,150 - level_text_surface.get_size()[1] // 2))
+    screen.blit(level_text_surface, (150 - level_text_surface.get_size()[0] // 2 - 1, 200 - level_text_surface.get_size()[1] // 2))
     screen.blit(personal_best_text_surface, (0, 0))
-    RedButton.show()
-    GreenButton.show()
-    PurpleButton.show()
-    LightBlueButton.show()
-    YellowButton.show()
-    BlueButton.show()
 
+# interface blocks(buttons, rects, etc.)
+
+MenuStartButton = Button(
+    (75, 200),
+    (150, 50),
+    (0, 255, 255),
+    (0, 255, 255),
+    type='menu'
+)
 RedButton = Button(
     (0, 300),
     (100, 100),
