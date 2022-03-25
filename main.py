@@ -1,3 +1,4 @@
+import json
 import sys
 import time
 import math
@@ -9,7 +10,6 @@ score = 0
 level_k = 1
 menu_flag = True
 new_level_flag = False
-personal_best = 0
 stop_flag = False
 mainloop_stop_flag = False
 ans_flag = False
@@ -19,11 +19,16 @@ screen = pygame.display.set_mode((300, 500))
 pygame.display.set_caption("TouchColor on PyGame")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Calibri", 30)
+#load data
+with open('data.json') as file:
+    data = json.load(file)
+    personal_best = data["Personal Best"]
 # background
 background = pygame.image.load('touchcolorbg.png')
 background = pygame.transform.scale(background, (300, 500))
 # text
-menu_start_button_text_surface = pygame.font.SysFont("Calibri", 20).render('Start Game!', True, (0, 0, 0))
+menu_personal_best_surface = pygame.font.SysFont("Calibri", 20).render('Personal Best: ' + str(personal_best), True, (157, 0, 255))
+menu_logo_surface = pygame.transform.scale(pygame.image.load('TouchColorText.png'), (200, 30))
 personal_best_text_surface = pygame.font.SysFont("Calibri", 20).render('PB: ' + str(personal_best), True, (157, 0, 255))
 score_text_surface = font.render(str(score), True, (0, 0, 0))
 level_text_surface = pygame.font.SysFont("Calibri", 40).render('Level ' + str(score // 10 + 1), True, (0, 0, 0))
@@ -77,35 +82,50 @@ class SimpleRect: # just rectangles
 
 
 class Button:
-    def __init__(self, pos, size, color, target, type='game', text='', text_color='pink', alpha=255):
+    def __init__(self, pos, size, color, type='game', text='', image='', text_color='pink', alpha=255):
         self.type = type
+        # position, size
         self.i = 0
         self.x, self.y = pos
         self.size = size
+        # color
         self.color = color
         self.text_color = text_color
         self.alpha = alpha
-        self.target = target
-        self.text = pygame.font.SysFont("Calibri", 20).render(text, True, self.text_color)
+        self.image_flag = False
+        if image != '':
+            self.image_flag = True
+            self.image = pygame.transform.scale(pygame.image.load(image), self.size)
+        # rendering surfaces
+        self.text_flag = False
+        if text != '':
+            self.text_flag = True
+            self.text = pygame.font.SysFont("Calibri", 20).render(text, True, self.text_color)
         self.surface = pygame.Surface(self.size)
         self.surface.fill(self.color)
+        self.surface.set_alpha(self.alpha)
         self.rect = pygame.Rect(self.x, self.y, self.size[0], self.size[1])
 
     def show(self):
-        if self.alpha != 0:
-            screen.blit(self.surface, (self.x + self.i, self.y + self.i))
-        screen.blit(self.text, (self.x, self.y))
+        screen.blit(self.surface, (self.x + self.i, self.y + self.i))
+        if self.image_flag:
+            screen.blit(self.image, (self.x, self.y))
+        if self.text_flag:
+            screen.blit(self.text, (self.x + (self.surface.get_width() - self.text.get_width()) // 2, self.y + (self.surface.get_height() - self.text.get_height()) // 2))
 
-    def action_to_manu(self):
+
+    def to_menu_button_action(self):
         global menu_flag
+        menu_personal_best_surface = pygame.font.SysFont("Calibri", 20).render(
+            'Personal Best: ' + str(personal_best), True, (157, 0, 255))
         menu_flag = True
 
-    def action_menu(self): # action function for buttons of 'menu' type
+    def menu_button_action(self): # action function for buttons of 'menu' type
         global menu_flag
         menu_flag = False
         starttimer()
 
-    def action(self):  # when button is pressed(for buttons of 'game' type)
+    def game_button_action(self):  # when button is pressed(for buttons of 'game' type)
         t = threading.Thread(target=lambda: answ(self.color))
         t.start()
         self.i = 0
@@ -130,18 +150,17 @@ class Button:
                 if self.rect.collidepoint(x, y):
                     if not new_level_flag:
                         if self.type == 'menu': # starting different functions for different types of buttons
-                            self.action_menu()
-                        elif self.type == 'to menu':
-                            self.action_to_manu()
-                        else:
-                            self.action()
+                            self.menu_button_action()
+                        elif self.type == 'to_menu':
+                            self.to_menu_button_action()
+                        elif self.type == 'game':
+                            self.game_button_action()
 
 
 
 def new_level(): # function of changing a level
     global score, level_text_surface, personal_best_text_surface, new_level_flag, level_k
     level_k = level_k / 1.1
-    pygame.display.update()
     screen.blit(background, (0, 0))
     level_text_surface = pygame.font.SysFont("Calibri", 40).render('Level ' + str(score // 10 + 1), True, (0, 0, 0, 0))
     new_level_show()
@@ -169,7 +188,7 @@ def answ(color): # when user is answering by pressing a button
     if score != 0 and score % 10 == 0:
         new_level_flag = True
     ans_flag = True
-    stop_flag = True #
+    stop_flag = True
 
 
 def starttimer():
@@ -208,6 +227,9 @@ def mainloop():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 mainloop_stop_flag = True
+                with open('data.json', 'w') as file:
+                    data['Personal Best'] = personal_best
+                    json.dump(data, file)
                 pygame.quit()
                 exit(0)
             if not menu_flag:
@@ -215,12 +237,13 @@ def mainloop():
             else:
                 MenuStartButton.click(event)
         if menu_flag:
+            screen.blit(menu_personal_best_surface, menu_personal_best_surface.get_rect(center=(300/2, 150)))
+            screen.blit(menu_logo_surface, (50, 50))
             MenuStartButton.show()
-            screen.blit(menu_start_button_text_surface, (100, 215))
-            pygame.display.update()
+            pygame.display.flip()
         if not new_level_flag and not menu_flag:
             game_show()
-            pygame.display.update()
+            pygame.display.flip()
 
 
 def all_button_click(event):
@@ -255,61 +278,61 @@ def new_level_show():
 # interface blocks(buttons, rects, etc.)
 
 MenuStartButton = Button(
-    (75, 200),
-    (150, 50),
+    (50, 200),
+    (200, 50),
     (0, 255, 255),
-    (0, 255, 255),
-    type='menu'
+    type='menu',
+    alpha=0,
+    image='TCFinalButton.png'
 )
 GameButtonToMenu = Button(
     (250, 0),
-    (50, 30),
+    (50, 20),
     (0, 0, 0),
-    (0, 0, 0),
-    type='to menu',
+    type='to_menu',
     text='menu',
-    text_color='blue',
+    text_color='purple',
     alpha=0
 )
 RedButton = Button(
     (0, 300),
     (100, 100),
     'red',
-    'red'
+    type='game'
 )
 GreenButton = Button(
     (0, 400),
     (100, 100),
     'green',
-    'green'
+    type='game'
 )
 PurpleButton = Button(
     (100, 300),
     (100, 100),
     'purple',
-    'purple'
+    type='game'
 )
 LightBlueButton = Button(
     (100, 400),
     (100, 100),
     (0, 255, 255),
-    (0, 255, 255)
+    type='game'
 )
 YellowButton = Button(
     (200, 300),
     (100, 100),
     'yellow',
-    'yellow'
+    type='game'
 )
 BlueButton = Button(
     (200, 400),
     (100, 100),
     'blue',
-    'blue'
+    type='game'
 )
 ShowColor = SimpleRect(
     (100, 100),
     (100, 100),
-    'blue'
+    'blue',
 )
 mainloop()
