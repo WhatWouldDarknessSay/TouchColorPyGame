@@ -6,7 +6,7 @@ import pygame
 import threading
 import random
 # variables
-score = 0
+score = 9
 level_k = 1
 menu_flag = True
 new_level_flag = False
@@ -130,18 +130,20 @@ class Button:
         t.start()
         self.i = 0
         tmp = -3.14
-        while tmp <= 3.14:
+        while tmp <= 3.14 and not new_level_flag:
             self.i = (math.cos(tmp) + 1) * 3
             self.surface = pygame.Surface((self.size[0] - self.i * 2, self.size[1] - self.i * 2))
             self.surface.fill(self.color)
-            game_show()
-            pygame.display.update()
+            if not new_level_flag:
+                game_show()
+                pygame.display.update()
             tmp += 0.01
         self.surface = pygame.Surface((self.size[0], self.size[1]))
         self.surface.fill(self.color)
         self.i = 0
-        game_show()
-        pygame.display.update()
+        if not new_level_flag:
+            game_show()
+            pygame.display.update()
 
     def click(self, event): # detection of clicking and later instructions
         x, y = pygame.mouse.get_pos()
@@ -167,11 +169,19 @@ def new_level(): # function of changing a level
     screen.blit(level_text_surface, (150 - level_text_surface.get_size()[0] // 2 - 1, 150 - level_text_surface.get_size()[1] // 2))
     pygame.display.update()
     new_level_show()
-    for _ in range(6):
+    for _ in range(24):
         pygame.display.update()
+        level_text_surface.set_alpha(_ * 10)
         new_level_show()
         pygame.display.update()
-        time.sleep(0.5)
+        time.sleep(0.03125)
+    time.sleep(0.75)
+    for _ in range(24):
+        pygame.display.update()
+        level_text_surface.set_alpha((12 - _) * 10)
+        new_level_show()
+        pygame.display.update()
+        time.sleep(0.03125)
 
     new_level_flag = False
 
