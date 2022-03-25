@@ -6,7 +6,7 @@ import pygame
 import threading
 import random
 # variables
-score = 9
+score = 0
 level_k = 1
 menu_flag = True
 new_level_flag = False
