@@ -24,11 +24,11 @@ with open('data.json') as file:
     data = json.load(file)
     personal_best = data["Personal Best"]
 # background
-background = pygame.image.load('touchcolorbg.png')
+background = pygame.image.load('media/touchcolorbg.png')
 background = pygame.transform.scale(background, (300, 500))
 # text
 menu_personal_best_surface = pygame.font.SysFont("Calibri", 20).render('Personal Best: ' + str(personal_best), True, (157, 0, 255))
-menu_logo_surface = pygame.transform.scale(pygame.image.load('TouchColorText.png'), (200, 30))
+menu_logo_surface = pygame.transform.scale(pygame.image.load('media/TouchColorText.png'), (200, 30))
 personal_best_text_surface = pygame.font.SysFont("Calibri", 20).render('PB: ' + str(personal_best), True, (157, 0, 255))
 score_text_surface = font.render(str(score), True, (0, 0, 0))
 level_text_surface = pygame.font.SysFont("Calibri", 40).render('Level ' + str(score // 10 + 1), True, (0, 0, 0))
@@ -293,7 +293,7 @@ MenuStartButton = Button(
     (0, 255, 255),
     type='menu',
     alpha=0,
-    image='TCFinalButton.png'
+    image='media/TCFinalButton.png'
 )
 GameButtonToMenu = Button(
     (250, 0),
